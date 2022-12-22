@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# This script will change the mode of the Wazo stacks. Mode change
+# allows Kamailio to route traffic to a secondary Wazo stack while
+# the main one is being upgraded.
+
+# The following mode are available
+# maintenance - When running on the secondary Wazo to upgrade the primary
+# normal - When running on the primary Wazo (alternatively to upgrade the secondary)
+
+set -e
+set -u  # fail if variable is undefined
+set -o pipefail  # fail if command before pipe fails
+
+function usage () {
+    echo "$0 <maintenance|normal>"
+    exit 1
+}
+
+# Checking command line arguments
+if [ $# -ne 1 ]; then
+    usage
+fi
+
+if [[ "$1" == "maintenance" ]]; then
+    MODE=1
+elif [[ "$1" == "normal" ]]; then
+    MODE=0
+else
+    usage
+fi
+
+# Checking if correctly configured
+CONFIG_FILENAME="/etc/wazo-maintenance/config.conf"
+source "${CONFIG_FILENAME}"
+
+if [ -z "${PRIMARY_HOSTNAME}" ]; then
+    echo "Missing configuration for PRIMARY_HOSTNAME in ${CONFIG_FILENAME}"
+    exit 1
+fi
+
+if [ -z "${SECONDARY_HOSTNAME}" ]; then
+    echo "Missing configuration for SECONDARY_HOSTNAME in ${CONFIG_FILENAME}"
+    exit 1
+fi
+
+
+echo "Switching to mode ${MODE} primary ${PRIMARY_HOSTNAME} secondary ${SECONDARY_HOSTNAME}"
+
+function sync () {
+    echo "Synchronizing database"
+    ssh "root@${PRIMARY_HOSTNAME}" "/usr/sbin/xivo-master-slave-db-replication" "${SECONDARY_HOSTNAME}"
+
+    echo "Synchronizing data"
+    ssh "root@${PRIMARY_HOSTNAME}" "/usr/bin/xivo-sync"
+}
+
+function reload_secondary_asterisk () {
+    ssh "root@${SECONDARY_HOSTNAME}" "asterisk -rx 'core reload'"
+}
+
+sync
+reload_secondary_asterisk
