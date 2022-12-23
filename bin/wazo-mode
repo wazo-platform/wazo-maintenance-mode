@@ -111,6 +111,38 @@ function switch_traffic () {
     kamctl rpc pv.shvSet routemode int ${routemode}
 }
 
+function call_count () {
+    case ${MODE} in
+
+        "normal")
+            where="root@${SECONDARY_HOSTNAME}"
+            ;;
+
+        "maintenance")
+            where="root@${PRIMARY_HOSTNAME}"
+            ;;
+
+    esac
+
+    number_of_calls=$(ssh "${where}" "asterisk -rx 'core show channels' | grep 'active call' | awk -F' ' '{ print \$1 }'")
+}
+
+
+function monitor_calls () {
+    echo "Monitoring calls"
+    while : ; do
+        number_of_calls=-1; call_count
+        echo "There are currently ${number_of_calls} active calls"
+        if [[ "${number_of_calls}" == "0" ]]; then
+            break
+        else
+            sleep 1
+        fi
+    done
+    echo "No active calls"
+}
+
 sync
 reload_secondary_asterisk
 switch_traffic
+monitor_calls
