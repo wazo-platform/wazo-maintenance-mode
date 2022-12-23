@@ -22,13 +22,21 @@ if [ $# -ne 1 ]; then
     usage
 fi
 
-if [[ "$1" == "maintenance" ]]; then
-    MODE=1
-elif [[ "$1" == "normal" ]]; then
-    MODE=0
-else
-    usage
-fi
+MODE="$1"
+case $MODE in
+
+    "maintenance")
+        echo "Going into maintenance mode"
+        ;;
+
+    "normal")
+        echo "Going into normal mode"
+        ;;
+
+    *)
+        usage
+        ;;
+esac
 
 # Checking if correctly configured
 CONFIG_FILENAME="/etc/wazo-maintenance/config.conf"
@@ -48,16 +56,61 @@ fi
 echo "Switching to mode ${MODE} primary ${PRIMARY_HOSTNAME} secondary ${SECONDARY_HOSTNAME}"
 
 function sync () {
-    echo "Synchronizing database"
-    ssh "root@${PRIMARY_HOSTNAME}" "/usr/sbin/xivo-master-slave-db-replication" "${SECONDARY_HOSTNAME}"
+    case ${MODE} in
 
-    echo "Synchronizing data"
-    ssh "root@${PRIMARY_HOSTNAME}" "/usr/bin/xivo-sync"
+    "normal")
+        echo "Generating call logs"
+        ssh "root@${PRIMARY_HOSTNAME}" ". /etc/profile.d/xivo_uuid.sh && /usr/bin/wazo-call-logs"
+        ;;
+
+    "maintenance")
+        echo "Synchronizing database"
+        ssh "root@${PRIMARY_HOSTNAME}" "/usr/sbin/xivo-master-slave-db-replication" "${SECONDARY_HOSTNAME}"
+
+        echo "Synchronizing data"
+        ssh "root@${PRIMARY_HOSTNAME}" "/usr/bin/xivo-sync"
+
+        echo "Generating call logs"
+        ssh "root@${SECONDARY_HOSTNAME}" ". /etc/profile.d/xivo_uuid.sh && /usr/bin/wazo-call-logs"
+
+        ;;
+
+    esac
 }
 
 function reload_secondary_asterisk () {
-    ssh "root@${SECONDARY_HOSTNAME}" "asterisk -rx 'core reload'"
+    case ${MODE} in
+
+        "normal")
+            where="root@${PRIMARY_HOSTNAME}"
+            ;;
+
+        "maintenance")
+            where="root@${SECONDARY_HOSTNAME}"
+            ;;
+
+    esac
+
+    ssh ${where} "asterisk -rx 'core reload'"
+}
+
+function switch_traffic () {
+    case ${MODE} in
+
+        "normal")
+            routemode=0
+            ;;
+
+        "maintenance")
+            routemode=2
+            ;;
+
+    esac
+
+    echo "Switching Kamailio routing mode to ${routemode}"
+    kamctl rpc pv.shvSet routemode int ${routemode}
 }
 
 sync
 reload_secondary_asterisk
+switch_traffic
