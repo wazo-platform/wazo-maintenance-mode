@@ -78,7 +78,7 @@ function sync () {
     esac
 }
 
-function reload_secondary_asterisk () {
+function reload_asterisk () {
     case ${MODE} in
 
         "normal")
@@ -143,6 +143,6 @@ function monitor_calls () {
 }
 
 sync
-reload_secondary_asterisk
+reload_asterisk
 switch_traffic
 monitor_calls
