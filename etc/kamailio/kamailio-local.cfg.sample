@@ -1,0 +1,17 @@
+## config/kamailio-local.cfg
+
+#!define DBGLEVEL 2
+
+## The SIP address to reach this proxy
+#!define SIPADDRINTERN "sip:<IP ADDRESS>:5060"
+
+## The domain names that are configured on the phones both should map to the Kamailio server
+#!define SIPDOMAIN01 "<domain name 1>"
+#!define SIPDOMAIN02 "<domain name 2>"
+
+listen=udp:<IP ADDRESS>:5060
+
+mhomed=1
+
+#!define WITH_ANTIFLOOD
+#!define WITH_NAT
