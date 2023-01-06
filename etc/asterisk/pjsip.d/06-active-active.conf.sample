@@ -1,0 +1,24 @@
+[instance2]
+type=endpoint
+ 
+[instance2-devicestate]
+type=outbound-publish
+server_uri=sip:instance1@<OTHER IP ADDRESS>
+event=asterisk-devicestate
+ 
+[instance2-mwi]
+type=outbound-publish
+server_uri=sip:instance1@<OTHER IP ADDRESS>
+event=asterisk-mwi
+ 
+[instance2]
+type=inbound-publication
+event_asterisk-devicestate=instance2
+event_asterisk-mwi=instance2
+ 
+[instance2]
+type=asterisk-publication
+devicestate_publish=instance2-devicestate
+mailboxstate_publish=instance2-mwi
+device_state=yes
+mailbox_state=yes

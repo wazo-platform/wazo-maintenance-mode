@@ -23,8 +23,22 @@ ssh-copy-id root@<primary-stack-hostname>
 ssh-copy-id root@<secondary-stack-hostname>
 ```
 
+# Configuration
+
+BLF synchronization
+
+The file `etc/asterisk/pjsip.d/06-active-active.conf.sample` needs to be copied to
+`/etc/asterisk/pjsip.d/06-active-active.conf` on each Wazo stacks.
+
+The content of the file should be modified as follow
+
+On the primary
+
+Change `<OTHER IP ADDRESS>` to the IP address of the secondary
+
+On the secondary
+
+Change `<OTHER IP ADDRESS>` to the IP address of the primary
+Change all occurences of `instance2` to `instance1`
+
 # Current limitations
-
-## BLF
-
-Since only one of the Asterisk recieves a SUBSCRIBE there are only one Asterisk updating BLF
