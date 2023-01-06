@@ -22,3 +22,9 @@ ssh-keygen -t ed25519
 ssh-copy-id root@<primary-stack-hostname>
 ssh-copy-id root@<secondary-stack-hostname>
 ```
+
+# Current limitations
+
+## BLF
+
+Since only one of the Asterisk recieves a SUBSCRIBE there are only one Asterisk updating BLF
