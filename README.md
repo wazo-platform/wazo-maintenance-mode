@@ -27,11 +27,187 @@ ssh-copy-id root@<secondary-stack-hostname>
 
 ## HA configuration
 
-The primary should have it's HA configured as master
-The secondary should have it's HA configured as disabled
-Manually configure the slave to allow PG synchronization
-launch xivo-sync -i on the master
+* The primary should have it's HA configured as master
+* The secondary should have it's HA configured as disabled
+* Manually configure the slave to allow PG synchronization
 
+In `/etc/postgresql/11/main/pg_hba.conf` add the following line replacing
+`<PRIMARY IP ADDRESS>` with the IP address of the primary Wazo.
+```
+host asterisk postgres <PRIMARY IP ADDRESS>/32 trust
+```
+
+* Setup SSH key authorization between master and slave
+
+Launch `xivo-sync -i` on the primary
+
+## Voicemail synchronization
+
+* Install nfs server on the somewhere in your infrastructure.
+
+I installed it on the same VM as my Kamailio using the following command
+
+```
+dnf install nfs-utils
+```
+
+* Start the nfs server
+
+```
+systemctl enable nfs-server.service
+systemctl start nfs-server.service
+```
+
+* Create the directory for voicemails
+
+```
+mkdir -p /mnt/nfs_shares/voicemails
+```
+
+* Add the created directory to nfs exports in `/etc/exports` by adding the following line replacing `<PRIMARY IP ADDRESS>` and `<SECONDARY IP ADDRESS>`
+
+```
+/mnt/nfs_shares/voicemails	<PRIMARY IP ADDRESS>(rw,no_root_squash,sync) <SECONDARY IP ADDRESS>(rw,no_root_squash,sync)
+```
+
+* Export the directory
+
+```
+exportfs -arv
+```
+
+* If you are using `firewalld` it will need to be configured for nfs
+
+```
+firewall-cmd --permanent --add-service=nfs
+firewall-cmd --permanent --add-service=rpc-bind
+firewall-cmd --permanent --add-service=mountd
+firewall-cmd --reload
+```
+
+* Install the nfs client on each Wazo stack
+
+```
+apt update
+apt install nfs-common nfs4-acl-tools
+```
+
+* Test to see if the exports are visible
+
+```
+showmount -e <NFS SERVER IP address>
+```
+
+The output should be similar to this
+
+```
+Export list for <proxy IP address>:
+/mnt/nfs_shares/voicemails <Wazo primary IP address>,<Wazo secondary IP address>
+```
+        
+* Create the local voicemail directory
+
+```
+mv /var/spool/asterisk/voicemail /var/spool/asterisk/voicemail_old
+mkdir /var/spool/asterisk/voicemail
+mount -t nfs <NFS SERVER IP ADDRESS>:/mnt/nfs_shares/voicemails /var/spool/asterisk/voicemail
+```
+
+* Copy old voicemails to the nfs share
+
+```
+mv -i /var/spool/asterisk/voicemail_old/* /var/spool/asterisk/voicemail
+rmdir /var/spool/asterisk/voicemail_old
+```
+
+* Make the nfs mount permanent 
+
+```
+echo "<NFS SERVER IP ADDRESS>:/mnt/nfs_shares/voicemails /var/spool/asterisk/voicemail nfs defaults 0 0">>/etc/fstab
+```
+
+## CEL replication
+
+Asterisk CEL are inserted on both Wazo stacks and the call logs are generated
+on both stacks.
+
+### Configuring the primary
+
+* Add the following lines to `/etc/odbc.ini`
+
+```
+[secondary]
+Description=Connection to the database of the secondary Wazo
+Driver=PostgreSQL ANSI
+Trace=No
+Database=asterisk
+Servername=<SECONDARY IP ADDRESS>
+```
+
+* Create the matching `res_odbc` config in `/etc/asterisk/res_odbc.d/02-active-active.conf`
+
+```
+[secondary]
+enabled => yes
+dsn => secondary
+username => asterisk
+password => proformatique
+pre-connect => yes
+max_connections => 1
+```
+
+* Enable CEL logging on the secondary ODBC connection in `/etc/asterisk/cel_odbc.d/02-active-active.conf`
+
+```
+[secondary]
+connection = secondary
+table = cel
+```
+
+* Configure Postgresql to allow ODBC connection from the secondary in `/etc/postgresql/11/main/pg_hba.conf` add
+
+```
+hostnossl asterisk asterisk <SECONDARY IP ADDRESS>/32 md5
+```
+
+### Configuring the secondary
+
+* Add the following lines to `/etc/odbc.ini`
+
+```
+[primary]
+Description=Connection to the database of the primary Wazo
+Driver=PostgreSQL ANSI
+Trace=No
+Database=asterisk
+Servername=<PRIMARY IP ADDRESS>
+```
+
+* Create the matching `res_odbc` config in `/etc/asterisk/res_odbc.d/02-active-active.conf`
+
+```
+[primary]
+enabled => yes
+dsn => primary
+username => asterisk
+password => proformatique
+pre-connect => yes
+max_connections => 1
+```
+
+* Enable CEL logging on the primary ODBC connection in `/etc/asterisk/cel_odbc.d/02-active-active.conf`
+
+```
+[primary]
+connection = primary
+table = cel
+```
+
+* Configure Postgresql to allow ODBC connection from the secondary in `/etc/postgresql/11/main/pg_hba.conf` add
+
+```
+hostnossl asterisk asterisk <PRIMARY IP ADDRESS>/32 md5
+```
 
 ## BLF synchronization
 
