@@ -41,6 +41,16 @@ host asterisk postgres <PRIMARY IP ADDRESS>/32 trust
 
 Launch `xivo-sync -i` on the primary
 
+### Add a cron to check the state of the primary on the Kamailio proxy
+
+Copy the `bin/wazo-ha-check` script to `/usr/sbin/wazo-ha-check`
+
+Add the following content to `/etc/cron.d/wazo-active-active-ha`
+
+```
+* * * * * root /usr/sbin/wazo-ha-check <PRIMARY IP ADDRESS> >/dev/null
+```
+
 ## Voicemail synchronization
 
 * Install nfs server on the somewhere in your infrastructure.
@@ -240,30 +250,34 @@ Change all occurences of `instance2` to `instance1`
     This prevents a DB synchronization from happening when the Wazo stacks
     are not in the same version and could have different database schema.
 
-2. Do one last manual synchronization
+2. Stop the HA check cron from the proxy
+
+    Stop automatic traffic switching from the HA cron
+
+3. Do one last manual synchronization
 
     This will synchronize all changes made in the last hours before upgrading
 
-3. Generate call logs
+4. Generate call logs
 
     Avoid a big gap in the call logs by forcing the call log generation for calls that happenned on the other Wazo
 
-4. wazo-upgrade the secondary
+5. wazo-upgrade the secondary
 
     Check for errors
 
-5. Switch mode to "maintenance" from the proxy
+6. Switch mode to "maintenance" from the proxy
 
-6. Monitor calls on the primary until all calls are on the secondary
+7. Monitor calls on the primary until all calls are on the secondary
 
     Wait until all calls are done on the primary before upgrading, the upgrade will stop services
 
-7. wazo-upgrade the primary
+8. wazo-upgrade the primary
 
     Check for errors
 
-8. Switch mode to "normal" from the proxy
+9. Switch mode to "normal" from the proxy
 
-9. Restart the synchronization cron on the primary
+10. Restart the synchronization cron on the primary
 
     All done

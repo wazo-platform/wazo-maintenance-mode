@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# This script is a replacement for the xivo-check-master-status script
+
+set -e
+set -u  # fail if variable is undefined
+set -o pipefail  # fail if command before pipe fails
+
+ip_addr=$1
+ping_count="3"
+ping_interval="10"
+
+if [ -z "$ip_addr" ]; then
+    echo "usage: $(basename $0) ip_addr"
+    exit 1
+fi
+
+ping -c $ping_count -i $ping_interval $ip_addr
+if [ $? -eq 0 ]; then
+    /usr/sbin/kamctl rpc pv.shvSet routemode int 0
+else
+    /usr/sbin/kamctl rpc pv.shvSet routemode int 2
+fi
