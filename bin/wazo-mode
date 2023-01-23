@@ -78,22 +78,6 @@ function sync () {
     esac
 }
 
-function reload_asterisk () {
-    case ${MODE} in
-
-        "normal")
-            where="root@${PRIMARY_HOSTNAME}"
-            ;;
-
-        "maintenance")
-            where="root@${SECONDARY_HOSTNAME}"
-            ;;
-
-    esac
-
-    ssh ${where} "asterisk -rx 'core reload'"
-}
-
 function switch_traffic () {
     case ${MODE} in
 
@@ -143,6 +127,5 @@ function monitor_calls () {
 }
 
 sync
-reload_asterisk
 switch_traffic
 monitor_calls
