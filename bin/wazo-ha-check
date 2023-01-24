@@ -2,7 +2,6 @@
 
 # This script is a replacement for the xivo-check-master-status script
 
-set -e
 set -u  # fail if variable is undefined
 set -o pipefail  # fail if command before pipe fails
 
