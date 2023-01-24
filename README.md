@@ -51,6 +51,12 @@ Add the following content to `/etc/cron.d/wazo-active-active-ha`
 * * * * * root /usr/sbin/wazo-ha-check <PRIMARY IP ADDRESS> >/dev/null
 ```
 
+Restart cron
+
+```
+systemctl restart crond.service
+```
+
 ## Voicemail synchronization
 
 * Install nfs server on the somewhere in your infrastructure.
@@ -180,6 +186,12 @@ table = cel
 hostnossl asterisk asterisk <SECONDARY IP ADDRESS>/32 md5
 ```
 
+in `/etc/postgresql/11/main/postgresql.conf` add the following line
+
+```
+listen_addresses = '*'
+```
+
 ### Configuring the secondary
 
 * Add the following lines to `/etc/odbc.ini`
@@ -218,6 +230,11 @@ table = cel
 ```
 hostnossl asterisk asterisk <PRIMARY IP ADDRESS>/32 md5
 ```
+
+in `/etc/postgresql/11/main/postgresql.conf` add the following line
+
+```
+listen_addresses = '*'
 
 ## BLF synchronization
 
