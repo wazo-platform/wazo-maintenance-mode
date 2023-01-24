@@ -55,29 +55,6 @@ fi
 
 echo "Switching to mode ${MODE} primary ${PRIMARY_HOSTNAME} secondary ${SECONDARY_HOSTNAME}"
 
-function sync () {
-    case ${MODE} in
-
-    "normal")
-        echo "Generating call logs"
-        ssh "root@${PRIMARY_HOSTNAME}" ". /etc/profile.d/xivo_uuid.sh && /usr/bin/wazo-call-logs"
-        ;;
-
-    "maintenance")
-        echo "Synchronizing database"
-        ssh "root@${PRIMARY_HOSTNAME}" "/usr/sbin/xivo-master-slave-db-replication" "${SECONDARY_HOSTNAME}"
-
-        echo "Synchronizing data"
-        ssh "root@${PRIMARY_HOSTNAME}" "/usr/bin/xivo-sync"
-
-        echo "Generating call logs"
-        ssh "root@${SECONDARY_HOSTNAME}" ". /etc/profile.d/xivo_uuid.sh && /usr/bin/wazo-call-logs"
-
-        ;;
-
-    esac
-}
-
 function switch_traffic () {
     case ${MODE} in
 
@@ -126,6 +103,5 @@ function monitor_calls () {
     echo "No active calls"
 }
 
-sync
 switch_traffic
 monitor_calls
