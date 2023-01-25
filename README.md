@@ -256,6 +256,8 @@ listen_addresses = '*'
 
 ## BLF synchronization
 
+THIS SECTION IS STILL IN PROGRESS IT MUST BE SKIPPED AT THE MOMENT
+
 The file `etc/asterisk/pjsip.d/06-active-active.conf.sample` needs to be copied to
 `/etc/asterisk/pjsip.d/06-active-active.conf` on each Wazo stacks.
 
@@ -271,6 +273,8 @@ Change `<OTHER IP ADDRESS>` to the IP address of the primary
 Change all occurences of `instance2` to `instance1`
 
 # Current limitations
+
+BLF synchronization goes crazy after an upgrade
 
 
 # Upgrading
