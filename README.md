@@ -23,6 +23,10 @@ ssh-copy-id root@<primary-stack-hostname>
 ssh-copy-id root@<secondary-stack-hostname>
 ```
 
+# Installation
+
+Copy the script in `bin/wazo-mode` to the proxy in `/usr/bin/wazo-mode`
+
 # Configuration
 
 ## HA configuration
@@ -267,23 +271,57 @@ Change all occurences of `instance2` to `instance1`
     This prevents a DB synchronization from happening when the Wazo stacks
     are not in the same version and could have different database schema.
 
+    In `/etc/cron.d/xivo-ha-master` comment both lines
+
+```
+# 0 * * * * root /usr/sbin/xivo-master-slave-db-replication <SECONDARY IP ADDRESS> >/dev/null
+# 0 * * * * root /usr/bin/xivo-sync >/dev/null
+```
+
 2. Stop the HA check cron from the proxy
 
     Stop automatic traffic switching from the HA cron
+
+    In `/etc/cron.d/wazo-active-active-ha` comment the line
+
+```
+# * * * * * root /usr/sbin/wazo-ha-check <PRIMARY IP ADDRESS> >/dev/null
+```
 
 3. Do one last manual synchronization
 
     This will synchronize all changes made in the last hours before upgrading
 
+    From the primary launch the following command
+
+```
+xivo-master-slave-db-replication <SECONDARY IP ADDRESS>
+xivo-sync
+```
+
 4. Generate call logs
 
     Avoid a big gap in the call logs by forcing the call log generation for calls that happenned on the other Wazo
 
+    On the secondary execute the following command
+
+```
+. /etc/profile.d/xivo_uuid.sh && /usr/bin/wazo-call-logs
+```
+
 5. wazo-upgrade the secondary
+
+```
+wazo-upgrade
+```
 
     Check for errors
 
 6. Switch mode to "maintenance" from the proxy
+
+```
+wazo-mode maintenance
+```
 
 7. Monitor calls on the primary until all calls are on the secondary
 
@@ -291,10 +329,24 @@ Change all occurences of `instance2` to `instance1`
 
 8. wazo-upgrade the primary
 
+```
+wazo-upgrade
+```
+
     Check for errors
 
 9. Switch mode to "normal" from the proxy
 
+```
+wazo-mode normal
+```
+
 10. Restart the synchronization cron on the primary
+
+Uncomment the lines in `/etc/cron.d/xivo-ha-master`
+
+11. Restart the HA check on the proxy
+
+Uncomment the line in `/etc/cron.d/wazo-active-active-ha`
 
     All done
