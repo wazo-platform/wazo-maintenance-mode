@@ -11,7 +11,7 @@ Your infrastructure will require the following.
 2 Wazo stacks configured in HA mode
 1 server with Kamailio installed
 
-The kamailio server should have to hostnames pointing to it's IP address.
+The kamailio server should have two hostnames pointing to it's IP address.
 
 The Kamailio server named "proxy" from now on should be able to ssh to both Wazo stacks without entering a password
 
@@ -23,11 +23,30 @@ ssh-copy-id root@<primary-stack-hostname>
 ssh-copy-id root@<secondary-stack-hostname>
 ```
 
+
 # Installation
 
 Copy the script in `bin/wazo-mode` to the proxy in `/usr/bin/wazo-mode`
+Copy the configuration file in `etc/kamailio/kamailio.cfg` to the proxy in `/etc/kamailio/kamailio.cfg`
+Copy the configuration file in `etc/kamailio/kamailio-local.cfg.sample` to the proxy in `/etc/kamailio/kamailio-local.cfg`
 
 # Configuration
+
+## Proxy configuration
+
+* In `/etc/kamailio/kamailio-local.cfg`
+
+  * Set the `SIPDOMAIN01` and `SIPDOMAIN02` variables to the 2 hostnames resolving to the Kamailio proxy
+  * Set the `SIPADDRINTERN` variable to `sip:<kamailio proxy IP address>:5060`
+  * Set the `listen` parameter to `udp:<kamailio proxy IP address>:5060`
+  * Create the dispatcher "DB" file `/etc/kamailio/dispatcher.list` with the following content
+
+```
+# setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attributes(str,opt)
+
+1 sip:<PRIMARY IP ADDRESS>:5060 0 0
+2 sip:<SECONDARY IP ADDRESS>:5060 0 0
+```
 
 ## HA configuration
 
