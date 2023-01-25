@@ -41,6 +41,19 @@ In `/etc/postgresql/11/main/pg_hba.conf` add the following line replacing
 host asterisk postgres <PRIMARY IP ADDRESS>/32 trust
 ```
 
+* Disable wazo-provd on the secondary
+
+```
+mkdir -p /etc/systemd/system/wazo-provd.service.d
+cat <<EOF > /etc/systemd/system/wazo-provd.service.d/seamless-upgrade.conf
+[Unit]
+ConditionPathExists=!/var/lib/wazo/wazo-provd-disabled
+EOF
+touch /var/lib/wazo/wazo-provd-disabled
+systemctl daemon-reload
+systemctl restart wazo-provd
+```
+
 * Setup SSH key authorization between master and slave
 
 Launch `xivo-sync -i` on the primary
