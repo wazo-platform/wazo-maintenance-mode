@@ -252,6 +252,7 @@ in `/etc/postgresql/11/main/postgresql.conf` add the following line
 
 ```
 listen_addresses = '*'
+```
 
 ## BLF synchronization
 
