@@ -5,18 +5,32 @@
 set -u  # fail if variable is undefined
 set -o pipefail  # fail if command before pipe fails
 
-ip_addr=$1
 ping_count="3"
 ping_interval="10"
 
-if [ -z "$ip_addr" ]; then
-    echo "usage: $(basename $0) ip_addr"
+CONFIG_FILENAME="/etc/wazo-maintenance/config.conf"
+source "${CONFIG_FILENAME}"
+
+if [ -z "${PRIMARY_HOSTNAME}" ]; then
+    echo "Missing configuration for PRIMARY_HOSTNAME in ${CONFIG_FILENAME}"
     exit 1
 fi
 
-ping -c $ping_count -i $ping_interval $ip_addr
+current_mode=$(/usr/sbin/kamctl rpc pv.shvGet routemode | grep 'value' | awk -F':' '{ print $NF }' | sed 's/ //g')
+if [ -z "${current_mode}" ]; then
+    echo "Failed to fetch the current mode. Is kamailio running?"
+    exit 2
+fi
+
+ping -c $ping_count -i $ping_interval $PRIMARY_HOSTNAME
 if [ $? -eq 0 ]; then
     /usr/sbin/kamctl rpc pv.shvSet routemode int 0
 else
+    if [ "${current_mode}" -eq "2" ]; then
+        exit 0
+    fi
+    ssh "root@${SECONDARY_HOSTNAME}" "wazo-confgen asterisk/pjsip.conf --invalidate"
+    ssh "root@${SECONDARY_HOSTNAME}" "asterisk -rx 'core reload'"
+    ssh "root@${SECONDARY_HOSTNAME}" "wazo-agentd-cli -c 'relog all --timeout 60'"
     /usr/sbin/kamctl rpc pv.shvSet routemode int 2
 fi
