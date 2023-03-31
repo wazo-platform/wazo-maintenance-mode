@@ -27,6 +27,7 @@ ssh-copy-id root@<secondary-stack-hostname>
 # Installation
 
 Copy the script in `bin/wazo-mode` to the proxy in `/usr/bin/wazo-mode`
+Copy the script in `bin/sync-agent-login.py` to the primary in `/usr/local/bin/sync-agent-login.py`
 Copy the configuration file in `etc/kamailio/kamailio.cfg` to the proxy in `/etc/kamailio/kamailio.cfg`
 Copy the configuration file in `etc/kamailio/kamailio-local.cfg.sample` to the proxy in `/etc/kamailio/kamailio-local.cfg`
 
@@ -92,6 +93,32 @@ Restart cron
 ```
 systemctl restart crond.service
 ```
+
+## Agent synchronization
+
+Create a refresh token for the script. On the primary
+```
+PASSWORD=$(cat /proc/sys/kernel/random/uuid | sed 's/[-]//g' | head -c 20; echo)
+USER_UUID=$(wazo-auth-cli user create --password ${PASSWORD} wazo-agent-sync)
+wazo-auth-cli user add --policy wazo_default_admin_policy wazo-agent-sync
+curl -ki -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' -u "wazo-agent-sync:${PASSWORD}" -d '{"access_type": "offline", "backend": "wazo_user", "client_id": "ha-agent-sync-primary", "expiration": 1}' 'https://localhost:443/api/auth/0.1/token'| grep -oE '"refresh_token": ".*"'
+```
+Note the refresh token that was returned from the `curl` command above.
+
+Copy `etc/wazo-agent-sync.yml` to `/etc/wazo-agent-sync.yml` on the primary.
+Edit `/etc/wazo-agent-sync.yml` and configure the missing fields.
+
+Force a DB sync using the command `xivo-master-slave-db-replication <slave IP address>`
+
+Copy `etc/systemd/system/wazo-agent-sync.service` to `/etc/systemd/system/wazo-agent-sync.service` on the primary
+
+Enable the new service
+```
+systemctl daemon-reload
+systemctl enable wazo-agent-sync.service
+systemctl start wazo-agent-sync.service
+```
+
 
 ## Voicemail synchronization
 

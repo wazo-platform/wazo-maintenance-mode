@@ -1,0 +1,4 @@
+primary_hostname: localhost
+secondary_hostname: <secondary IP address>
+refresh_token: <refresh token>
+client_id: ha-agent-sync-primary
