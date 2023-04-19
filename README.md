@@ -55,7 +55,7 @@ Copy the configuration file in `etc/kamailio/kamailio-local.cfg.sample` to the p
 * The secondary should have it's HA configured as disabled
 * Manually configure the slave to allow PG synchronization
 
-In `/etc/postgresql/11/main/pg_hba.conf` add the following line replacing
+In `/etc/postgresql/13/main/pg_hba.conf` add the following line replacing
 `<PRIMARY IP ADDRESS>` with the IP address of the primary Wazo.
 ```
 host asterisk postgres <PRIMARY IP ADDRESS>/32 trust
@@ -243,13 +243,13 @@ connection = secondary
 table = cel
 ```
 
-* Configure Postgresql to allow ODBC connection from the secondary in `/etc/postgresql/11/main/pg_hba.conf` add
+* Configure Postgresql to allow ODBC connection from the secondary in `/etc/postgresql/13/main/pg_hba.conf` add
 
 ```
 hostnossl asterisk asterisk <SECONDARY IP ADDRESS>/32 md5
 ```
 
-in `/etc/postgresql/11/main/postgresql.conf` add the following line
+in `/etc/postgresql/13/main/postgresql.conf` add the following line
 
 ```
 listen_addresses = '*'
@@ -288,13 +288,13 @@ connection = primary
 table = cel
 ```
 
-* Configure Postgresql to allow ODBC connection from the secondary in `/etc/postgresql/11/main/pg_hba.conf` add
+* Configure Postgresql to allow ODBC connection from the secondary in `/etc/postgresql/13/main/pg_hba.conf` add
 
 ```
 hostnossl asterisk asterisk <PRIMARY IP ADDRESS>/32 md5
 ```
 
-in `/etc/postgresql/11/main/postgresql.conf` add the following line
+in `/etc/postgresql/13/main/postgresql.conf` add the following line
 
 ```
 listen_addresses = '*'
