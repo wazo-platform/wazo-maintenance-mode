@@ -112,7 +112,15 @@ Force a DB sync using the command `xivo-master-slave-db-replication <slave IP ad
 
 Copy `etc/systemd/system/wazo-agent-sync.service` to `/etc/systemd/system/wazo-agent-sync.service` on the primary
 
+Install `wazo-websocketd-client-python3` on the primary
+
+```
+apt update
+apt install wazo-websocketd-client-python3
+```
+
 Enable the new service
+
 ```
 systemctl daemon-reload
 systemctl enable wazo-agent-sync.service
