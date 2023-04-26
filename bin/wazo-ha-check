@@ -24,11 +24,16 @@ fi
 
 ping -c $ping_count -i $ping_interval $PRIMARY_HOSTNAME
 if [ $? -eq 0 ]; then
+    if [ "${current_mode}" -eq "0" ]; then
+        exit 0
+    fi
+    /usr/bin/wazo-agent-login-secondary-to-primary.py -i
     /usr/sbin/kamctl rpc pv.shvSet routemode int 0
 else
     if [ "${current_mode}" -eq "2" ]; then
         exit 0
     fi
+    ssh "root@${SECONDARY_HOSTNAME}" "systemctl restart wazo-agid wazo-agentd wazo-call-logd wazo-confd wazo-dird"
     ssh "root@${SECONDARY_HOSTNAME}" "wazo-confgen asterisk/pjsip.conf --invalidate"
     ssh "root@${SECONDARY_HOSTNAME}" "asterisk -rx 'core reload'"
     ssh "root@${SECONDARY_HOSTNAME}" "wazo-agentd-cli -c 'relog all --timeout 60'"
