@@ -28,6 +28,7 @@ ssh-copy-id root@<secondary-stack-hostname>
 
 Copy the script in `bin/wazo-mode` to the proxy in `/usr/bin/wazo-mode`
 Copy the script in `bin/sync-agent-login.py` to the primary in `/usr/local/bin/sync-agent-login.py`
+Copy the script in `bin/wazo-agent-login-secondary-to-primary.py` to the proxy in `/usr/bin/wazo-agent-login-secondary-to-primary.py`
 Copy the configuration file in `etc/kamailio/kamailio.cfg` to the proxy in `/etc/kamailio/kamailio.cfg`
 Copy the configuration file in `etc/kamailio/kamailio-local.cfg.sample` to the proxy in `/etc/kamailio/kamailio-local.cfg`
 
