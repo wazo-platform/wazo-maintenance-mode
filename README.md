@@ -77,7 +77,7 @@ systemctl restart wazo-provd
 
 * Setup SSH key authorization between master and slave
 
-Launch `xivo-sync -i` on the primary
+Launch `wazo-sync -i` on the primary
 
 ### Add a cron to check the state of the primary on the Kamailio proxy
 
@@ -342,7 +342,7 @@ Change all occurences of `instance2` to `instance1`
 
 ```
 # 0 * * * * root /usr/sbin/xivo-master-slave-db-replication <SECONDARY IP ADDRESS> >/dev/null
-# 0 * * * * root /usr/bin/xivo-sync >/dev/null
+# 0 * * * * root /usr/bin/wazo-sync >/dev/null
 ```
 
 2. Stop the HA check cron from the proxy
@@ -363,7 +363,7 @@ Change all occurences of `instance2` to `instance1`
 
 ```
 xivo-master-slave-db-replication <SECONDARY IP ADDRESS>
-xivo-sync
+wazo-sync
 ```
 
 4. Generate call logs
