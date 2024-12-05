@@ -23,6 +23,17 @@ ssh-copy-id root@<primary-stack-hostname>
 ssh-copy-id root@<secondary-stack-hostname>
 ```
 
+This setup is meant to work with Yealink phones. The relevant configuration options
+for your Yealink phones are the following.
+
+```
+account.1.fallback.redundancy_type = 0
+account.1.blf.subscribe_period = 60
+```
+
+This will allow you phone to send a REGISTER to both Wazo server at the same time and
+send the SUBSCRIBE regularly to allow the BLF to be updated quickly after a switch from
+one server to the other.
 
 # Installation
 
